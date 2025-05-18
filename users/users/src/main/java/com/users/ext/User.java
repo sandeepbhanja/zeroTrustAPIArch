@@ -1,4 +1,5 @@
-package com.auth;
+package com.users.ext;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

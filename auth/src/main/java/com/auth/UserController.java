@@ -22,6 +22,7 @@ public class UserController {
     
     @PostMapping("/signup")
     public ResponseEntity<Map<String,Object>> signUp(@RequestBody User user){
+        System.out.println("User==="+user);
         Map<String, Object> response = userService.signUp(user);
         if(response.get("status").equals("error")){
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
@@ -30,8 +31,8 @@ public class UserController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<Map<String,Object>> signIn(@RequestBody String email,@RequestBody String password) {
-        Map<String,Object> response = userService.signIn(email,password);
+    public ResponseEntity<Map<String,Object>> signIn(@RequestBody Map<String,String> loginDetails) {
+        Map<String,Object> response = userService.signIn(loginDetails.get("email"),loginDetails.get("password"));
         if(response.get("status").equals("error")){
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
@@ -39,8 +40,14 @@ public class UserController {
     }
 
     @PostMapping("/generateToken")
-    public ResponseEntity<String> generateToken(@RequestBody Map<String, String> request) {
-        return new ResponseEntity<>("Token Generated", HttpStatus.OK);
+    public ResponseEntity<Map<String,Object>> generateToken(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String password = request.get("password");
+        Map<String, Object> response = userService.generateToken(email, password);
+        if (response.get("status").equals("error")) {
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

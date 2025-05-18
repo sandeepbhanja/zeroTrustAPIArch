@@ -1,29 +1,30 @@
 package com.auth.Implementation;
-import java.util.List;
-import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Map;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.auth.User;
 import com.auth.UserRepository;
 import com.auth.UserService;
+import com.auth.utils.JWTUtil;
 
 @Service
-public class UserServiceImplementation implements UserService{
+public class UserServiceImplementation implements UserService {
 
     UserRepository userRepository;
+    JWTUtil jwtUtil;
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
-    public UserServiceImplementation(UserRepository userRepository) {
+
+    public UserServiceImplementation(UserRepository userRepository, JWTUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
     }
 
     @Override
-    public Map<String,Object> signUp(User userToSignUp) {
+    public Map<String, Object> signUp(User userToSignUp) {
         User userList = userRepository.findByEmail(userToSignUp.getEmail());
-        if(userList == null){
+        if (userList == null) {
             String encodedPassword = encoder.encode(userToSignUp.getPassword());
             userToSignUp.setPassword(encodedPassword);
             userRepository.save(userToSignUp);
@@ -34,11 +35,12 @@ public class UserServiceImplementation implements UserService{
     }
 
     @Override
-    public Map<String,Object> signIn(String email, String password) {
+    public Map<String, Object> signIn(String email, String password) {
         User user = this.userRepository.findByEmail(email);
-        if(user!=null){
+        System.out.println("User======"+user);
+        if (user != null) {
             boolean isPasswordMatch = encoder.matches(password, user.getPassword());
-            if(isPasswordMatch){
+            if (isPasswordMatch) {
                 return Map.of("status", "success", "message", "User logged in successfully");
             } else {
                 return Map.of("status", "error", "message", "Invalid password");
@@ -48,9 +50,20 @@ public class UserServiceImplementation implements UserService{
     }
 
     @Override
-    public String generateToken(String username, String password) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generateToken'");
+    public Map<String,Object> generateToken(String email, String password) {
+        User user = this.userRepository.findByEmail(email);
+        if (user != null) {
+            boolean isPasswordMatch = encoder.matches(password, user.getPassword());
+            if (isPasswordMatch) {
+                // Generate JWT token
+                String jwtToken = jwtUtil.generateToken(user.getId(),user.getRole());
+                return Map.of("status", "success", "token", jwtToken);
+            }
+            else{
+                return Map.of("status", "error", "message", "Invalid password");
+            }
+        }
+        return Map.of("status", "error", "message", "User not found");
     }
-    
+
 }
